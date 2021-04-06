@@ -1,0 +1,226 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Untitled0.ipynb",
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "ir",
+      "display_name": "R"
+    },
+    "language_info": {
+      "name": "R"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/almedida/thesis/blob/main/hammed%20research\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "_g9y085uPNOm",
+        "outputId": "7a074a8a-add7-459e-ffb2-493beacb7512"
+      },
+      "source": [
+        "install.packages(\"pacman\")"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Installing package into ‘/usr/local/lib/R/site-library’\n",
+            "(as ‘lib’ is unspecified)\n",
+            "\n"
+          ],
+          "name": "stderr"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "N91RX-RBNI0L"
+      },
+      "source": [
+        "\n",
+        "library(pacman)\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "VzGEGYCERqyU"
+      },
+      "source": [
+        "p_load(\"tidyverse\", \"tmvtnorm\", \"mvtnorm\")\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "mEBlzVo7RjT8"
+      },
+      "source": [
+        "maize_df = read.table(\"maize_bivariate_pvals.txt\", header= T, sep=\"\")\n",
+        "backup_df = maize_df\n",
+        "row.names(maize_df) = NULL\n",
+        "dim(maize_df)\n",
+        "\n",
+        "\n",
+        "colnames(maize_df) = c(\"pvalsB\", \"pvalsM\")\n",
+        "head(maize_df,2)\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "AlgLTEI8Rwvt"
+      },
+      "source": [
+        "\n",
+        "#filerting the pvalues using 0.7 and 0.55 respectively\n",
+        "p_vals = maize_df  %>% filter(pvalsB >=0.7, pvalsM>=0.55)\n",
+        "\n",
+        "#convert selected pvalues to z values\n",
+        "z_val = as.data.frame(qnorm(as.matrix(p_vals), lower.tail = TRUE))\n",
+        "\n",
+        "#convert lambda(truncation points) to z values\n",
+        "z_val_extremums = as.data.frame(qnorm(as.matrix(cbind(c(0.7,1),c(0.55,1))), lower.tail = TRUE))\n",
+        "\n",
+        "head(z_val, 2)\n",
+        "head(z_val_extremums,2)\n",
+        "\n",
+        "# max_z1 = max(z_val[,1])\n",
+        "# max_z2 = max(z_val[,2])\n",
+        "# \n",
+        "# min_z1 = min(z_val[,1])\n",
+        "# min_z2 = min(z_val[,2])\n",
+        "\n",
+        "\n",
+        "min_z1 = z_val_extremums[1,1]\n",
+        "min_z2 = z_val_extremums[1,2]\n",
+        "\n",
+        "min_z1\n",
+        "min_z2\n",
+        "\n",
+        "\n",
+        "#density function for each row of the bivariate z values (x) and \n",
+        "#estimated parameters(rho)\n",
+        "density = function(x, rho)\n",
+        "{\n",
+        "  sigma = matrix(c(1, rho, rho, 1), 2, 2)\n",
+        "  # z = dtmvnorm(x, mean = c(0,0), sigma = sigma, lower = c(min_z1, min_z2), upper = c(max_z1, max_z2))\n",
+        "  \n",
+        "  z = dtmvnorm(x, mean = c(0,0), sigma = sigma, lower = c(min_z1, min_z2))\n",
+        "  z\n",
+        "}\n",
+        "\n",
+        "#log likelihood of the joint densities\n",
+        "log_likelihood_fn = function(rho){\n",
+        "  \n",
+        "  joint_likelihood = z_val %>% split(.$pvalsM) %>% map_dfr(~density(c(.$pvalsB,.$pvalsM),rho))    \n",
+        "  return(-sum(log(joint_likelihood)))\n",
+        "  \n",
+        "}\n",
+        "\n",
+        "\n",
+        "#MLE of the log likelihood function\n",
+        "optimal_rho = optimize(log_likelihood_fn, lower = -1, upper = 1 )\n",
+        "optimal_rho = as.data.frame(optimal_rho)\n",
+        "optimal_rho\n",
+        "\n",
+        "\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "5378_b1tR9fI"
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ZOi73az1R3UF"
+      },
+      "source": [
+        "density_test = function(x, rho_test)\n",
+        "{\n",
+        "  sigma = matrix(c(1, rho_test, rho_test, 1), 2, 2)\n",
+        "  z = dtmvnorm(x, mean = c(0,0), sigma = sigma, lower = c(0.524, 0.126))\n",
+        "  z\n",
+        "}"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vYqxbeGrR1IH"
+      },
+      "source": [
+        "\n",
+        "#testing with simulated data\n",
+        "#log likelihood of the joint densities\n",
+        "log_likelihood_test = function(rho_test){\n",
+        "  \n",
+        "  joint_likelihood_test= dat2 %>% split(.$simM) %>% map_dfr(~density_test(c(.$simB,.$simM),rho_test))    \n",
+        "  return(-sum(log(joint_likelihood_test)))\n",
+        "  \n",
+        "}"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "3b0oa0i5RziG"
+      },
+      "source": [
+        "#MLE of the log likelihood function\n",
+        "optimal_rho_test = optimize(log_likelihood_test, lower = -1, upper = 1 )\n",
+        "optimal_rho_test = as.data.frame(optimal_rho_test)\n",
+        "optimal_rho_test\n",
+        "\n",
+        "#probability of a random variable greater than lambda 1 and 2 \n",
+        "lambda1 = 0.5244005\n",
+        "lambda2 = 0.1256613\n",
+        "pmvnorm(lower=c(lambda1, lambda2), upper=c(Inf, Inf), mean=c(0,0), sigma = matrix(c(1, rho, rho, 1), 2, 2))\n",
+        "\n",
+        "#pmvnorm(lower=lambda2, upper=Inf, mean=c(0,0), sigma = matrix(c(1, rho, rho, 1), 2, 2))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}

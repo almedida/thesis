@@ -1,6 +1,6 @@
-# thesis: Estimating the Number of Genes That Are Differentially Expressed in Both of Two Dependent Experiments
-We are separately analyzing data from two experiments to produce a list of genes declared to be DE in each experiment. Each list is produced using a method that attempts to control the false discovery rate (FDR) in each experiment at some desired level α.
-The number of genes common to both lists is used as an estimate of the number of genes DE in both experiments.
-We propose a Truncated Bivariate and Trivariate Normal Distribution that use the z- values from both experiments simultaneously to produce one estimate which does not depend on FDR level α—for the number of genes that are DE in both experiments.
-We use two simulation studies (one involving independent, normally distributed data and one involving microarray data) to compare the performances of our proposed method, the commonly used method, and another method proposed in literature to test for consistency of replicate experiments.
-We also compare 3 groups of gene expression in a single experiment.
+Estimating The Number Differentially Expressed Genes In Two Dependent Experiments (codes)
+Analyzing microarray and RNA-seq data to determine the genes from two dependent experiments that are different in their expressions using R and Excel
+The pairs of p-values for the two experiments were separately extracted using the student's t-test and moderated t-test
+Used Histogram-based method to determine the cutoff points for p-values, for comparing the compatible and incompatible expressions and used Intersection method to find differentially expressed genes in both experiments while controlling the false discovery rate (FDR) at different levels using Benjamini-Hochberg for the adjusted p-value
+Proposed a method using Truncated Bivariate Normal Distribution to produce an estimate that does not depend on FDR to estimate the number of genes that are differentially expressed in the two dependent experiments
+Used two simulation studies (one involving independent, normally distributed data and one involving microarray data) to compare the performances of our proposed method, and another method proposed in literature to test for consistency of replicate experiments
